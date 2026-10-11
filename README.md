@@ -1,3 +1,58 @@
+# ESPsoup radar firmware (ESP32-C6 + 60 GHz radar)
+
+Repository: [github.com/pit711/mr60bha2-sdr-firmware](https://github.com/pit711/mr60bha2-sdr-firmware)
+
+This is the **ESPsoup radar firmware**: receive-only ESP-SDR firmware for
+**ESP32-C6** boards that carry a 60 GHz **HLK-LD6002 / Seeed MR60BHA2** radar
+module on GPIO16/17, such as the Seeed Studio XIAO ESP32-C6 on the MR60BHA2
+kit. One USB connection (native USB Serial/JTAG) serves both the ESP-SDR
+protocol and a raw link to the radar.
+
+It is a fork of [pit711/espsoup-firmware](https://github.com/pit711/espsoup-firmware),
+which is itself a fork of [ESPARGOS ESP-SDR](https://github.com/ESPARGOS/esp-sdr)
+(GPL-3.0). All ESP-SDR commands and replies are unchanged. The ESP32-C5
+optimisations of ESPsoup (capture engine, BIGCAP, STREAM, PARLIO, ...) do not
+apply to the ESP32-C6; it uses the upstream C6 receiver path.
+
+| Command | Reply |
+| --- | --- |
+| `RADAR?` | `RADAR <n> <crc32>\n` followed by `n` raw radar bytes (max 4096) |
+| `RADARTX <hex>` | writes up to 60 bytes to the radar, `OK` (`ERR radar_args` on bad input) |
+| `RADARINFO?` | `RADARINFO <ready> <baud> <pending> <bufsize> <rx_total> <tx_total>` |
+
+`CAPS` gains the token `RADAR`. The radar runs on UART1 (TX GPIO16, RX GPIO17,
+115200 baud, 16 KB receive buffer, Kconfig `ESP_SDR_RADAR_*`). Because GPIO16/17
+are the C6's default UART0 pins, the build profile disables the ESP-SDR burst
+UART0 and the console; use the native USB port.
+
+### Build and flash
+
+Use the ESP-IDF commit pinned in [firmware-targets.json](firmware-targets.json)
+and the profile `sdkconfig.defaults.esp32c6-radar`:
+
+```sh
+git submodule update --init
+idf.py -B build-c6-radar -DIDF_TARGET=esp32c6 -DSDKCONFIG=sdkconfig.c6-radar \
+  -DSDKCONFIG_DEFAULTS=sdkconfig.defaults.esp32c6-radar build
+```
+
+On Windows PowerShell quote the `-D` arguments. Release packages contain
+`bootloader.bin`, `partition-table.bin`, the application, `flash_args`,
+`manifest.json` and `SHA256SUMS`. Back up the old flash first, then write
+the release from its directory:
+
+```sh
+python -m esptool --chip esp32c6 -p PORT -b 921600 read-flash 0 ALL backup.bin
+python -m esptool --chip esp32c6 -p PORT -b 921600 write-flash @flash_args
+```
+
+License: GPL-3.0 (see [NOTICE](NOTICE)). Distribute binaries only together
+with the corresponding source.
+
+The ESPsoup firmware README (ESP32-C5) and the upstream ESP-SDR documentation follow.
+
+---
+
 # ESPsoup firmware (ESP-SDR fork for the ESP32-C5)
 
 This is **ESPsoup firmware**, a fork of [ESPARGOS ESP-SDR](https://github.com/ESPARGOS/esp-sdr)
