@@ -9,6 +9,7 @@
 #include "esp_log.h"
 #include "esp_phy_cert_test.h"
 #include "esp_rom_crc.h"
+#include "radar_link.h"
 #include "esp_timer.h"
 #include "esp_wifi.h"
 #include "freertos/FreeRTOS.h"
@@ -280,6 +281,7 @@ void app_main(void) {
     (void)usb_serial_jtag_wait_tx_done(pdMS_TO_TICKS(100));
     ESP_ERROR_CHECK(usb_serial_jtag_driver_uninstall());
     burst_serial_init();
+    radar_link_init();
     char line[128];int owner=-1;int64_t lease_deadline=0;
     for(;;) {
         if(esp_timer_get_time()>=lease_deadline)owner=-1;
@@ -299,6 +301,7 @@ static void handle_command(char *line) {
 #ifndef CAP_MAX_WORDS
 #define CAP_MAX_WORDS IQ_WORDS   /* C5: BIGCAP limit from c5_opt_caps.h */
 #endif
+    if(radar_link_command(line)) return;
 #ifdef RING_PROBE
     if(ring_probe_command(line)) return;
 #endif
@@ -352,6 +355,9 @@ static void handle_command(char *line) {
 #endif
         else if(!strcmp(line,"CAPS")) {
             reply("CAPS SPEC SPECN SPECCAPS SPECSTAT DCT UARTBAUD RXLIMITS GAIN HWAGC IQ8 SERIALLEASE"
+#if CONFIG_ESP_SDR_RADAR_ENABLED
+                  " RADAR"
+#endif
                   " TUNEEXT"
 #if !CONFIG_IDF_TARGET_ESP32C6
                   " LPF LPF12"

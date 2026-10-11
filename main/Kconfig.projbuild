@@ -55,3 +55,31 @@ menu "ESP-SDR transport"
         default 44
 
 endmenu
+
+menu "ESPsoup radar link"
+
+    config ESP_SDR_RADAR_ENABLED
+        bool "Buffer a TinyFrame radar module on UART1 (RADAR?, RADARTX)"
+        depends on IDF_TARGET_ESP32C6 || IDF_TARGET_ESP32C5
+        default n
+        help
+            Passes the byte stream of a 60 GHz radar module (Seeed MR60BHA2 /
+            HLK-LD6002) through to the host. Disable ESP_SDR_UART_ENABLED when
+            the radar uses the same GPIOs as the burst UART.
+
+    config ESP_SDR_RADAR_BAUD
+        int "Radar UART baud rate"
+        depends on ESP_SDR_RADAR_ENABLED
+        default 115200
+
+    config ESP_SDR_RADAR_TX_PIN
+        int "Radar UART TX GPIO (to radar RX)"
+        depends on ESP_SDR_RADAR_ENABLED
+        default 16
+
+    config ESP_SDR_RADAR_RX_PIN
+        int "Radar UART RX GPIO (from radar TX)"
+        depends on ESP_SDR_RADAR_ENABLED
+        default 17
+
+endmenu
